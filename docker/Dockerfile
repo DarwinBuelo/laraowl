@@ -58,8 +58,7 @@ ARG VITE_REVERB_HOST=localhost
 ARG VITE_REVERB_PORT=443
 ARG VITE_REVERB_SCHEME=https
 
-RUN export APP_KEY=base64:PFjUoYfTaDT8FU9OSFRydSUC7qpN3ZGd/QtiDhm7/DI=\
-    && composer dump-autoload --optimize --no-dev --no-interaction \
+RUN composer dump-autoload --optimize --no-dev --no-interaction \
     && npm run build \
     && rm -rf node_modules \
     && mkdir -p storage/app/public \
