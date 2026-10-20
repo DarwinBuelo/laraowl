@@ -17,7 +17,6 @@
         "mcp-development",
         "wayfinder-development",
         "inertia-react-development",
-        "tailwindcss-development",
-        "echo-development"
+        "tailwindcss-development"
     ]
 }
