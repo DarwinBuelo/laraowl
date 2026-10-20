@@ -5,15 +5,22 @@ set -euo pipefail
 cd /var/www/html
 
 main() {
+    if [[ "${1:-}" == "bootstrap" ]]; then
+        wait_for_db
+        run_migrations
+        optimize_app
+        touch /tmp/app-ready
+        echo "Application is ready."
+        exit 0
+    fi
+
     prepare_storage
-    wait_for_db
-    run_migrations
-    optimize_app
     render_nginx
 
     # www-data workers (Horizon, the scheduler, Reverb) write container logs.
     chmod a+rw /dev/stdout /dev/stderr 2>/dev/null || true
 
+    echo "Nginx is listening on 0.0.0.0:${PORT}."
     exec "$@"
 }
 
@@ -71,7 +78,7 @@ render_nginx() {
 
     mkdir -p /etc/nginx/snippets "$config_dir"
 
-    export PORT="${PORT:-80}"
+    export PORT="${PORT:-8080}"
 
     if [[ -z "${APP_HOSTNAME:-}" ]]; then
         export APP_HOSTNAME="_"
@@ -91,7 +98,7 @@ EOF
         echo "TLS certificates found. HTTPS is enabled."
     else
         printf '' > /etc/nginx/snippets/ssl.conf
-        echo "No TLS certificates in /etc/nginx/certs. Serving HTTP on port 80."
+        echo "No TLS certificates in /etc/nginx/certs. Serving HTTP on port ${PORT}."
     fi
 
     envsubst '${PORT} ${APP_HOSTNAME} ${WS_HOSTNAME}' \

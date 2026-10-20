@@ -76,11 +76,13 @@ COPY docker/supervisord.conf /etc/supervisord.conf
 COPY docker/php-fpm.conf /usr/local/etc/php-fpm.d/zz-docker-app.conf
 COPY docker/entrypoint /usr/local/bin/entrypoint
 
+ENV PORT=8080
+
 RUN chmod +x /usr/local/bin/entrypoint \
     && mkdir -p /etc/nginx/snippets /var/log/supervisor \
     && rm -f /etc/nginx/http.d/default.conf
 
-EXPOSE 80 443
+EXPOSE 8080
 
 ENTRYPOINT ["/usr/local/bin/entrypoint"]
 CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisord.conf"]
