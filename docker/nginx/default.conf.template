@@ -52,6 +52,12 @@ server {
         fastcgi_param DOCUMENT_ROOT $document_root;
         fastcgi_hide_header X-Powered-By;
         fastcgi_read_timeout 300;
+        # Inertia pages copy every Vite preload into one Link header. The
+        # default 4k/8k buffer is too small, so nginx returns 502
+        # ("upstream sent too big header") instead of the page.
+        fastcgi_buffer_size 128k;
+        fastcgi_buffers 8 16k;
+        fastcgi_busy_buffers_size 128k;
     }
 
     location ~ /\.(?!well-known).* {
