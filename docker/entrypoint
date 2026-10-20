@@ -36,9 +36,19 @@ prepare_storage() {
 wait_for_db() {
     echo "Waiting for the database..."
 
-    until php artisan migrate:status 2>&1 | grep -q -E '(Migration table not found|Migration name)'; do
+    local attempts=0
+    local output
+
+    until output=$(php artisan migrate:status 2>&1) && grep -q -E '(Migration table not found|Migration name)' <<< "$output"; do
+        attempts=$((attempts + 1))
+
+        if (( attempts >= 60 )); then
+            echo "Database is still unreachable after 60 seconds. Last error:"
+            echo "$output"
+            exit 1
+        fi
+
         sleep 1
-        echo "."
     done
 }
 
@@ -61,6 +71,8 @@ render_nginx() {
 
     mkdir -p /etc/nginx/snippets "$config_dir"
 
+    export PORT="${PORT:-80}"
+
     if [[ -z "${APP_HOSTNAME:-}" ]]; then
         export APP_HOSTNAME="_"
         export WS_HOSTNAME="_"
@@ -82,7 +94,7 @@ EOF
         echo "No TLS certificates in /etc/nginx/certs. Serving HTTP on port 80."
     fi
 
-    envsubst '${APP_HOSTNAME} ${WS_HOSTNAME}' \
+    envsubst '${PORT} ${APP_HOSTNAME} ${WS_HOSTNAME}' \
         < /etc/nginx/templates/default.conf.template \
         > "${config_dir}/default.conf"
 
