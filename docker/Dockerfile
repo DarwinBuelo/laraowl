@@ -58,7 +58,7 @@ ARG VITE_REVERB_HOST=localhost
 ARG VITE_REVERB_PORT=443
 ARG VITE_REVERB_SCHEME=https
 
-RUN export APP_KEY=base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= \
+RUN export APP_KEY=base64:PFjUoYfTaDT8FU9OSFRydSUC7qpN3ZGd/QtiDhm7/DI=\
     && composer dump-autoload --optimize --no-dev --no-interaction \
     && npm run build \
     && rm -rf node_modules \
@@ -74,13 +74,14 @@ RUN export APP_KEY=base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= \
 COPY docker/nginx/default.conf.template /etc/nginx/templates/default.conf.template
 COPY docker/supervisord.conf /etc/supervisord.conf
 COPY docker/php-fpm.conf /usr/local/etc/php-fpm.d/zz-docker-app.conf
-COPY docker/entrypoint /usr/local/bin/entrypoint
 ENV PORT=8080
-RUN chmod +x /usr/local/bin/entrypoint \
-    && mkdir -p /etc/nginx/snippets /var/log/supervisor \
-    && rm -f /etc/nginx/http.d/default.conf
+RUN mkdir -p /etc/nginx/snippets /var/log/supervisor \
+    && printf '' > /etc/nginx/snippets/ssl.conf \
+    && PORT=8080 APP_HOSTNAME=_ WS_HOSTNAME=_ envsubst '${PORT} ${APP_HOSTNAME} ${WS_HOSTNAME}' \
+        < /etc/nginx/templates/default.conf.template \
+        > /etc/nginx/http.d/default.conf \
+    && nginx -t
 
 EXPOSE 8080
 
-ENTRYPOINT ["/usr/local/bin/entrypoint"]
 CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisord.conf"]
