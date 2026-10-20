@@ -1,2 +1,6 @@
 publicHoistPattern:
   - '@inertiajs/core'
+ignoredBuiltDependencies:
+  - msw
+  - unrs-resolver
+strictDepBuilds: false

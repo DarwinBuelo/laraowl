@@ -1,0 +1,91 @@
+#!/bin/bash
+
+set -euo pipefail
+
+cd /var/www/html
+
+main() {
+    prepare_storage
+    wait_for_db
+    run_migrations
+    optimize_app
+    render_nginx
+
+    # www-data workers (Horizon, the scheduler, Reverb) write container logs.
+    chmod a+rw /dev/stdout /dev/stderr 2>/dev/null || true
+
+    exec "$@"
+}
+
+prepare_storage() {
+    echo "Preparing storage..."
+
+    mkdir -p storage/app/public \
+        storage/framework/cache/data \
+        storage/framework/sessions \
+        storage/framework/views \
+        storage/logs \
+        bootstrap/cache
+
+    chown -R www-data:www-data storage bootstrap/cache
+    chmod -R 775 storage bootstrap/cache
+
+    php artisan storage:link --force --ansi
+}
+
+wait_for_db() {
+    echo "Waiting for the database..."
+
+    until php artisan migrate:status 2>&1 | grep -q -E '(Migration table not found|Migration name)'; do
+        sleep 1
+        echo "."
+    done
+}
+
+run_migrations() {
+    php artisan migrate --force --ansi
+}
+
+optimize_app() {
+    php artisan optimize:clear --ansi
+    php artisan optimize --ansi
+}
+
+render_nginx() {
+    local config_dir="/etc/nginx/http.d"
+
+    if [[ ! -d "$config_dir" ]]; then
+        config_dir="/etc/nginx/conf.d"
+    fi
+
+    mkdir -p /etc/nginx/snippets "$config_dir"
+
+    if [[ -z "${APP_HOSTNAME:-}" ]]; then
+        export APP_HOSTNAME="_"
+        export WS_HOSTNAME="_"
+    else
+        export WS_HOSTNAME="ws.${APP_HOSTNAME}"
+    fi
+
+    if [[ -f /etc/nginx/certs/fullchain.pem && -f /etc/nginx/certs/privkey.pem ]]; then
+        cat > /etc/nginx/snippets/ssl.conf <<'EOF'
+listen 443 ssl;
+ssl_certificate     /etc/nginx/certs/fullchain.pem;
+ssl_certificate_key /etc/nginx/certs/privkey.pem;
+ssl_protocols       TLSv1.2 TLSv1.3;
+add_header Content-Security-Policy "upgrade-insecure-requests" always;
+EOF
+        echo "TLS certificates found. HTTPS is enabled."
+    else
+        printf '' > /etc/nginx/snippets/ssl.conf
+        echo "No TLS certificates in /etc/nginx/certs. Serving HTTP on port 80."
+    fi
+
+    envsubst '${APP_HOSTNAME} ${WS_HOSTNAME}' \
+        < /etc/nginx/templates/default.conf.template \
+        > "${config_dir}/default.conf"
+
+    nginx -t
+}
+
+main "$@"

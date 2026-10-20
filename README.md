@@ -160,7 +160,7 @@ Choose one of the following methods to install the LaraOwl server:
 
 ### Docker
 
-This project comes with a custom `Dockerfile` and `docker-compose.yml` for easy deployment. To get started:
+This project comes with a custom `docker/Dockerfile` and `docker-compose.yaml` for easy deployment. To get started:
 
 
 #### Changes in `.env` for docker configuration:
@@ -181,7 +181,7 @@ REVERB_APP_KEY=xxxxxxxxxxxxxxxxxxxxx
 REVERB_APP_SECRET=xxxxxxxxxxxxxxxxxxxxx
 ```
 
-The docker-compose.yaml file already has the correct service names for `db`, `redis`, and `reverb`. You only need to change the hostname and database credentials if you want to customize them.
+`docker-compose.yaml` already points the app at the `db` and `redis` services. Reverb runs in the app container, so leave `REVERB_HOST=127.0.0.1`. Change the hostname and database credentials if you want to customize them.
 
 #### Starting Production server
 Use the following command to start the server in production mode:
@@ -190,7 +190,9 @@ Use the following command to start the server in production mode:
 docker compose up -d --build
 ```
 
-The server will be available at `https://your-production-domain.com`. Make sure your DNS resolves for `ws.your-production-domain.com` and `your-production-domain.com`. Caddy will automatically fetch and renew SSL certificates for your domain.  
+`APP_HOSTNAME` and `REVERB_APP_KEY` are baked into the frontend during that build. Change them in `.env`, then build again.
+
+Nginx, PHP-FPM, Horizon, the scheduler, and Reverb run in the `app` container under Supervisor. The server listens on port 80. To serve HTTPS from this container, put `fullchain.pem` and `privkey.pem` in `docker/certs` and start again. Otherwise terminate TLS at a reverse proxy in front of port 80. DNS for `your-production-domain.com` and `ws.your-production-domain.com` must point at this host.  
 
 You can add a simple user through a tinker sessions with the following command:
 
