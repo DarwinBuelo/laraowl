@@ -49,6 +49,7 @@ run_migrations() {
 optimize_app() {
     php artisan optimize:clear --ansi
     php artisan optimize --ansi
+    chown -R www-data:www-data bootstrap/cache storage
 }
 
 render_nginx() {
