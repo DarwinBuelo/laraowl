@@ -43,6 +43,7 @@ class EnsureProjectExists
             return $next($request);
         }
 
+
         // Handle missing project context
         return $this->handleMissingProject($request, $currentTeam);
     }
