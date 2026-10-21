@@ -244,16 +244,17 @@ test('a new user joins the inviting team after registering', function () {
 
     $this->withMiddleware(CheckOnboarding::class)
         ->get($acceptUrl)
-        ->assertRedirect(route('login'));
+        ->assertInertia(fn ($page) => $page
+            ->component('auth/accept-invitation')
+            ->where('email', $invitation->email)
+            ->where('teamName', $team->name)
+        );
 
-    $this->post(route('register.store'), [
+    $this->post(route('invitations.accept.store', $invitation), [
         'name' => 'New User',
-        'email' => $invitation->email,
         'password' => 'password',
         'password_confirmation' => 'password',
-    ])->assertRedirect($acceptUrl);
-
-    $this->get($acceptUrl)->assertRedirect('/dashboard');
+    ])->assertRedirect('/dashboard');
 
     $user = User::where('email', $invitation->email)->firstOrFail();
 
