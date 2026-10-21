@@ -1,6 +1,5 @@
 server {
     listen 0.0.0.0:${PORT} default_server;
-    include /etc/nginx/snippets/ssl.conf;
 
     server_name ${APP_HOSTNAME} ${WS_HOSTNAME};
     root /var/www/html/public;

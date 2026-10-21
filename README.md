@@ -192,7 +192,7 @@ docker compose up -d --build
 
 `APP_HOSTNAME` and `REVERB_APP_KEY` are baked into the frontend during that build. Change them in `.env`, then build again.
 
-Nginx, PHP-FPM, Horizon, the scheduler, and Reverb run in the `app` container under Supervisor. The server listens on port 80. To serve HTTPS from this container, put `fullchain.pem` and `privkey.pem` in `docker/certs` and start again. Otherwise terminate TLS at a reverse proxy in front of port 80. DNS for `your-production-domain.com` and `ws.your-production-domain.com` must point at this host.  
+Nginx, PHP-FPM, Horizon, the scheduler, and Reverb run in the `app` container under Supervisor. The container listens on port 8080, published as port 80. TLS is terminated in front of it (Cloudflare or Railway), not inside the container. DNS for `your-production-domain.com` and `ws.your-production-domain.com` must point at that proxy.  
 
 You can add a simple user through a tinker sessions with the following command:
 

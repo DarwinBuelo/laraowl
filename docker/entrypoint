@@ -76,7 +76,7 @@ render_nginx() {
         config_dir="/etc/nginx/conf.d"
     fi
 
-    mkdir -p /etc/nginx/snippets "$config_dir"
+    mkdir -p "$config_dir"
 
     export PORT="${PORT:-8080}"
 
@@ -87,19 +87,7 @@ render_nginx() {
         export WS_HOSTNAME="ws.${APP_HOSTNAME}"
     fi
 
-    if [[ -f /etc/nginx/certs/fullchain.pem && -f /etc/nginx/certs/privkey.pem ]]; then
-        cat > /etc/nginx/snippets/ssl.conf <<'EOF'
-listen 443 ssl;
-ssl_certificate     /etc/nginx/certs/fullchain.pem;
-ssl_certificate_key /etc/nginx/certs/privkey.pem;
-ssl_protocols       TLSv1.2 TLSv1.3;
-add_header Content-Security-Policy "upgrade-insecure-requests" always;
-EOF
-        echo "TLS certificates found. HTTPS is enabled."
-    else
-        printf '' > /etc/nginx/snippets/ssl.conf
-        echo "No TLS certificates in /etc/nginx/certs. Serving HTTP on port ${PORT}."
-    fi
+    echo "Serving HTTP on port ${PORT}."
 
     envsubst '${PORT} ${APP_HOSTNAME} ${WS_HOSTNAME}' \
         < /etc/nginx/templates/default.conf.template \

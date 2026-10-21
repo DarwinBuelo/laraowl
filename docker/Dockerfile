@@ -74,8 +74,7 @@ COPY docker/nginx/default.conf.template /etc/nginx/templates/default.conf.templa
 COPY docker/supervisord.conf /etc/supervisord.conf
 COPY docker/php-fpm.conf /usr/local/etc/php-fpm.d/zz-docker-app.conf
 ENV PORT=8080
-RUN mkdir -p /etc/nginx/snippets /var/log/supervisor \
-    && printf '' > /etc/nginx/snippets/ssl.conf \
+RUN mkdir -p /var/log/supervisor \
     && PORT=8080 APP_HOSTNAME=_ WS_HOSTNAME=_ envsubst '${PORT} ${APP_HOSTNAME} ${WS_HOSTNAME}' \
         < /etc/nginx/templates/default.conf.template \
         > /etc/nginx/http.d/default.conf \

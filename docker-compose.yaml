@@ -24,12 +24,10 @@ services:
       PORT: "8080"
     ports:
       - 80:8080
-      - 443:443
     networks:
       - laraowl-network
     volumes:
       - storage:/var/www/html/storage:rw
-      - ./docker/certs:/etc/nginx/certs:ro
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/up"]
       interval: 10s
